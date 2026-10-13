@@ -9,7 +9,7 @@ import numpy as np
 # ----------------------------
 
 st.set_page_config(
-    page_title="FACE PARTICLE",
+    page_title="fusion of yours",
     page_icon="✨",
     layout="centered"
 )
@@ -175,9 +175,9 @@ def make_particle_image(image):
 # ウェブページの表示
 # ----------------------------
 
-st.title("FACE PARTICLE")
+st.title("fusion of yours")
 
-st.write("自分の顔を、光の粒子に変える。")
+st.write("あなたらしさと光を融合させてみよう")
 
 st.write(
     "画像をアップロードすると、"
@@ -185,7 +185,7 @@ st.write(
 )
 
 uploaded_file = st.file_uploader(
-    "顔写真を選択してください",
+    "画像を選択してください",
     type=["jpg", "jpeg", "png"]
 )
 
