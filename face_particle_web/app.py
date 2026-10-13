@@ -3,34 +3,114 @@ import streamlit as st
 import cv2
 import numpy as np
 
-
-# ----------------------------
-# ページ設定
-# ----------------------------
-
+# ---------------------------------
+# ページの基本設定
+# ---------------------------------
 st.set_page_config(
-    page_title="fusion of yours",
+    page_title="FUSION OF YOURS",
     page_icon="✨",
     layout="centered"
 )
 
+# ---------------------------------
+# サイトのデザイン
+# ---------------------------------
+st.markdown("""
+<style>
 
-# ----------------------------
-# 設定
-# ----------------------------
+/* ページ全体 */
+.stApp {
+    background:
+        radial-gradient(ellipse at 15% 15%, rgba(35, 65, 125, 0.22), transparent 40%),
+        radial-gradient(ellipse at 85% 35%, rgba(180, 65, 110, 0.13), transparent 38%),
+        #080D1B;
+    color: #F5F6FC;
+}
 
+/* コンテンツの幅と余白 */
+.block-container {
+    max-width: 850px;
+    padding-top: 3rem;
+    padding-bottom: 4rem;
+}
+
+/* 通常の文章 */
+.stApp p {
+    color: #C3CBE0;
+    line-height: 1.9;
+}
+
+/* 見出し */
+.stApp h1, .stApp h2, .stApp h3 {
+    color: #FFFFFF;
+}
+
+/* アップロード欄 */
+[data-testid="stFileUploader"] {
+    background: rgba(25, 37, 65, 0.75);
+    border: 1px dashed #697B9F;
+    border-radius: 14px;
+    padding: 18px;
+}
+
+/* ボタン */
+.stButton button,
+.stDownloadButton button {
+    background: linear-gradient(100deg, #D879A0, #F1A0B6);
+    color: #11182A;
+    border: none;
+    border-radius: 9px;
+    font-weight: bold;
+    padding: 0.65rem 1.2rem;
+}
+
+/* ボタンにカーソルを合わせたとき */
+.stButton button:hover,
+.stDownloadButton button:hover {
+    background: linear-gradient(100deg, #F19ABB, #FFC0CE);
+    color: #11182A;
+    border: none;
+}
+
+/* 区切り線 */
+hr {
+    border-color: #34415B;
+}
+
+/* キャプション */
+.stCaption {
+    color: #8795B2;
+}
+
+/* ダウンロードボタンの幅 */
+.stDownloadButton button {
+    width: 100%;
+}
+
+/* スマートフォン用 */
+@media (max-width: 600px) {
+    .block-container {
+        padding-top: 1.5rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
+# ---------------------------------
+# 粒子の色を決める
+# ※現在の設定を維持
+# ---------------------------------
 PARTICLE_SIZE = 5
 MAX_PARTICLE = 5
 GLOW = 20
 BACKGROUND = "black"
 
 
-# ----------------------------
-# 色を作る
-# ----------------------------
-
 def get_color(value):
-
     value = np.clip(value, 0, 1)
 
     colors = np.array([
@@ -43,20 +123,18 @@ def get_color(value):
     ], dtype=np.float32)
 
     position = value * (len(colors) - 1)
-
     index = min(int(position), len(colors) - 2)
     amount = position - index
 
-    color = colors[index] * (1 - amount) + \
-            colors[index + 1] * amount
+    color = colors[index] * (1 - amount) + colors[index + 1] * amount
 
     return tuple(int(x) for x in color)
 
 
-# ----------------------------
-# 粒子画像を作る
-# ----------------------------
-
+# ---------------------------------
+# 粒子画像を生成する
+# ※現在の加工方法を維持
+# ---------------------------------
 def make_particle_image(image):
 
     height, width = image.shape[:2]
@@ -71,10 +149,7 @@ def make_particle_image(image):
 
     height, width = image.shape[:2]
 
-    gray = cv2.cvtColor(
-        image,
-        cv2.COLOR_BGR2GRAY
-    )
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     gray = cv2.createCLAHE(
         clipLimit=2.5,
@@ -86,31 +161,18 @@ def make_particle_image(image):
     darkness = 1.0 - gray
     darkness = np.power(darkness, 1.3)
 
-    result = np.zeros(
-        (height, width, 3),
-        dtype=np.float32
-    )
+    result = np.zeros((height, width, 3), dtype=np.float32)
 
     glow_layer = np.zeros_like(result)
     particle_layer = np.zeros_like(result)
 
-    for y in range(
-        PARTICLE_SIZE // 2,
-        height,
-        PARTICLE_SIZE
-    ):
+    for y in range(PARTICLE_SIZE // 2, height, PARTICLE_SIZE):
 
-        for x in range(
-            PARTICLE_SIZE // 2,
-            width,
-            PARTICLE_SIZE
-        ):
+        for x in range(PARTICLE_SIZE // 2, width, PARTICLE_SIZE):
 
             value = darkness[y, x]
 
-            radius = int(
-                0.5 + MAX_PARTICLE * value
-            )
+            radius = int(0.5 + MAX_PARTICLE * value)
 
             if radius < 1:
                 radius = 1
@@ -128,9 +190,7 @@ def make_particle_image(image):
 
             if value > 0.3:
 
-                glow_size = int(
-                    1 + value * GLOW * 0.25
-                )
+                glow_size = int(1 + value * GLOW * 0.25)
 
                 cv2.circle(
                     glow_layer,
@@ -142,22 +202,13 @@ def make_particle_image(image):
                 )
 
     result = 255 - (
-        (255 - result) *
-        (255 - glow_layer) / 255
+        (255 - result) * (255 - glow_layer) / 255
     )
 
-    result = np.maximum(
-        result,
-        particle_layer
-    )
+    result = np.maximum(result, particle_layer)
 
-    result = np.clip(
-        result,
-        0,
-        255
-    ).astype(np.uint8)
+    result = np.clip(result, 0, 255).astype(np.uint8)
 
-    # 透過画像を作成
     alpha = np.max(result, axis=2).copy()
     alpha[alpha < 15] = 0
 
@@ -171,29 +222,122 @@ def make_particle_image(image):
     return result, transparent_result
 
 
-# ----------------------------
-# ウェブページの表示
-# ----------------------------
+# ---------------------------------
+# ヘッダー
+# ---------------------------------
+st.markdown("""
+<div style="text-align:center; margin-bottom:45px;">
 
-st.title("fusion of yours")
+    <div style="
+        color:#91A5C9;
+        font-size:11px;
+        letter-spacing:4px;
+        margin-bottom:18px;">
+        DIGITAL ART PROJECT
+    </div>
 
-st.write("あなたらしさと光を融合させてみよう")
+    <div style="
+        font-size:clamp(28px, 6vw, 48px);
+        font-weight:700;
+        letter-spacing:3px;
+        color:#FFFFFF;">
+        FUSION OF YOURS
+    </div>
 
-st.write(
-    "画像をアップロードすると、"
-    "粒子状の画像に自動で加工されます。"
-)
+    <div style="
+        color:#F19ABB;
+        font-size:18px;
+        letter-spacing:2px;
+        margin-top:14px;">
+        あなたの顔を、光の粒子に変える。
+    </div>
+
+</div>
+""", unsafe_allow_html=True)
+
+
+# ---------------------------------
+# コンセプト説明
+# ---------------------------------
+st.markdown("""
+<div style="
+    background:rgba(28, 40, 68, 0.55);
+    border:1px solid rgba(120, 145, 190, 0.25);
+    border-radius:15px;
+    padding:25px;
+    margin-bottom:35px;">
+
+    <div style="
+        color:#F19ABB;
+        font-size:11px;
+        letter-spacing:3px;
+        margin-bottom:13px;">
+        ABOUT THE PROJECT
+    </div>
+
+    <div style="
+        color:#FFFFFF;
+        font-size:21px;
+        font-weight:600;
+        margin-bottom:13px;">
+        小さな光が集まり、ひとつの顔になる。
+    </div>
+
+    <div style="
+        color:#C3CBE0;
+        font-size:14px;
+        line-height:2;">
+        無数の細やかな粒子が集まり、互いに影響しながら
+        光を生み出していく。<br>
+        核融合反応のように、あなたの顔を
+        新しい光のかたちへと変換します。
+    </div>
+
+</div>
+""", unsafe_allow_html=True)
+
+
+# ---------------------------------
+# 写真アップロード
+# ---------------------------------
+st.markdown("""
+<div style="margin-bottom:12px;">
+
+    <div style="
+        color:#F19ABB;
+        font-size:11px;
+        letter-spacing:3px;">
+        01 / UPLOAD YOUR PHOTO
+    </div>
+
+    <div style="
+        color:#FFFFFF;
+        font-size:19px;
+        font-weight:600;
+        margin-top:8px;">
+        あなたの写真を選んでください
+    </div>
+
+    <div style="
+        color:#AAB7D0;
+        font-size:13px;
+        margin-top:5px;">
+        顔がはっきり写った写真がおすすめです。
+    </div>
+
+</div>
+""", unsafe_allow_html=True)
+
 
 uploaded_file = st.file_uploader(
-    "画像を選択してください",
+    "写真をアップロード",
     type=["jpg", "jpeg", "png"]
 )
 
 
-# ----------------------------
-# 画像を加工
-# ----------------------------
-
+# ---------------------------------
+# 画像加工と結果表示
+# ---------------------------------
 if uploaded_file is not None:
 
     file_bytes = np.frombuffer(
@@ -212,25 +356,39 @@ if uploaded_file is not None:
 
     else:
 
-        with st.spinner("粒子を生成しています..."):
+        with st.spinner("光の粒子を生成しています..."):
 
-            black_result, transparent_result = \
-                make_particle_image(image)
+            black_result, transparent_result = make_particle_image(image)
 
-        st.success("加工が完成しました！")
+        st.success("粒子の生成が完成しました！")
 
-        st.subheader("加工結果")
+        st.markdown("""
+        <div style="
+            color:#F19ABB;
+            font-size:11px;
+            letter-spacing:3px;
+            margin-top:25px;">
+            02 / YOUR RESULT
+        </div>
+
+        <div style="
+            color:#FFFFFF;
+            font-size:21px;
+            font-weight:600;
+            margin-top:8px;
+            margin-bottom:15px;">
+            あなたから生まれた光
+        </div>
+        """, unsafe_allow_html=True)
+
+        # 黒背景版
+        st.subheader("黒背景版")
 
         st.image(
-            cv2.cvtColor(
-                black_result,
-                cv2.COLOR_BGR2RGB
-            ),
-            caption="黒背景版",
+            cv2.cvtColor(black_result, cv2.COLOR_BGR2RGB),
             use_container_width=True
         )
 
-        # 黒背景版のダウンロード
         success, black_encoded = cv2.imencode(
             ".png",
             black_result
@@ -245,7 +403,7 @@ if uploaded_file is not None:
                 mime="image/png"
             )
 
-        # 透過版の表示
+        # 透過版
         st.subheader("背景透過版")
 
         transparent_rgba = cv2.cvtColor(
@@ -273,7 +431,30 @@ if uploaded_file is not None:
                 mime="image/png"
             )
 
-        st.caption(
-            "アップロードした写真は、このプログラム内で加工するだけで、"
-            "画像ファイルとして保存しません。"
-        )
+
+# ---------------------------------
+# フッター
+# ---------------------------------
+st.markdown("""
+<div style="
+    text-align:center;
+    margin-top:65px;
+    padding-top:20px;
+    border-top:1px solid #34415B;">
+
+    <div style="
+        color:#91A5C9;
+        font-size:11px;
+        letter-spacing:4px;">
+        FUSION OF YOURS
+    </div>
+
+    <div style="
+        color:#64728F;
+        font-size:10px;
+        margin-top:10px;">
+        A DIGITAL PARTICLE EXPERIMENT
+    </div>
+
+</div>
+""", unsafe_allow_html=True)
