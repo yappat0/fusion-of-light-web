@@ -174,9 +174,6 @@ def make_particle_image(image):
 # ウェブページの表示
 # ----------------------------
 
-st.image("header.png", use_container_width=True)
-
-
 st.title("fusion of yours")
 
 st.write("あなたらしさと光を融合させてみよう")
